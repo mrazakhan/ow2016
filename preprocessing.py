@@ -22,7 +22,7 @@ nltk.download("words")
 gl.set_runtime_config('GRAPHLAB_DEFAULT_NUM_PYLAMBDA_WORKERS', 48)
 
 #district names
-districts=["rajanpur","chiniot","bhakkar","ghazi","mianwali","muzaffargarh","khushab","bahawalpur","multan","lahore","sialkot","rawalpindi","faisalabad","attock"] # excluding Kasur as well
+districts=["rajanpur","chiniot","bhakkar","ghazi","mianwali","muzaffargarh","khushab","bahawalpur","multan","lahore","sialkot","rawalpindi","faisalabad","attock","rahimyarkhan","pakpattan","khanewal","lodhran","gujranwala","sahiwal","qasur","chakwal"] # excluding Kasur as well
 
 def _filter_locations(x):
 	for each in re.findall(r"\w+",x):
@@ -56,7 +56,7 @@ def _detectLanguage(x):
 	sum=0
 	for each in tokenized_array:
 		sum+=_isNonEnglish(each.strip())
-	if sum<len(tokenized_array)/2.0:
+	if sum<len(tokenized_array)/3.0:
 		return 'English'
 	else:
 		return 'NonEnglish'
