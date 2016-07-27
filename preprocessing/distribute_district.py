@@ -17,6 +17,8 @@ import multiprocessing
 import argparse
 import csv
 
+import os
+
 
 districts=["rajanpur","chiniot","bhakkar","ghazi","mianwali","muzaffargarh","khushab","bahawalpur","multan","lahore","sialkot","rawalpindi","faisalabad","attock","rahimyarkhan","pakpattan","khanewal","lodhran","gujranwala","sahiwal","qasur","chakwal"]
 
@@ -88,7 +90,12 @@ def getNonEnglish(df):
 	df['NonEngTokens']=df['tText'].apply(tokenize)
 	return df
 
-
+def distribute_by_district(df):
+	out={}
+	for each in districts:
+		out[each]=df[df['uLocation']==each]
+	
+	return out
 	
 def applyParallel(dfGrouped, func):
     retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in dfGrouped)
@@ -99,21 +106,16 @@ if __name__=='__main__':
 
 	parser=argparse.ArgumentParser(description='Preprocessing and filtering')
 	parser.add_argument('-if','--input_file',help='Input File', required=True)
-	parser.add_argument('-of','--output_file',help='Output File', required=True)
 
 	args=parser.parse_args()
-	df=pd.read_csv(args.input_file, header=None, delimiter='\t', error_bad_lines =False)
 
-	df.columns=['tID','eName','eType','tText','tUrl','tTitleForUrl','tHashtags','tTotalRetweetCount','tIsRetweet','tOriginalID','tPostTime','tUtcOffset','tReceivedTime','tAdultScore','tQualityScore','tAuthorityScore','uScreenName','uFollowersCount','uIsVerified','tWordBrokenHashtag','tGeoPoint','uLocation','uTimeZone','tFavoriteCount','tReceivedHour']
-
-	df_loc=filter_locations(df)
-
-	dfEng=detectLanguage(df_loc[['tID','tText']])
-
-
-	#dfEng2=applyParallel(df_loc[['tID','tText','uLocation']].groupby(df_loc.index), detectLanguage)
-
-	dfEng.to_csv(args.output_file)
-
-
+	for name in [args.input_file]:#'EducationPakistan_201301.tsv','EducationPakistan_201302.tsv', 'EducationPakistan_201303.tsv', 'EducationPakistan_201304.tsv', 'EducationPakistan_201305.tsv', 'EducationPakistan_201306.tsv']:
+		print name
+		df=pd.read_csv(name, header=None, delimiter='\t', error_bad_lines =False,quoting=csv.QUOTE_NONE)
+		df.columns=['tID','eName','eType','tText','tUrl','tTitleForUrl','tHashtags','tTotalRetweetCount','tIsRetweet','tOriginalID','tPostTime','tUtcOffset', 'tReceivedTime','tAdultScore','tQualityScore','tAuthorityScore','uScreenName','uFollowersCount','uIsVerified','tWordBrokenHashtag','tGeoPoint','uLocation','uTimeZone','tFavoriteCount','tReceivedHour','uLocation2']
+		out=distribute_by_district(df)
+		for dname in out:
+			if not os.path.exists(dname):
+				os.makedirs(dname)
+			out[dname].to_csv(dname+'/'+dname+'_'+name, sep='\t',index=False)
 

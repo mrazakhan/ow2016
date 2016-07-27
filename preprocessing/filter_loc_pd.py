@@ -106,14 +106,13 @@ if __name__=='__main__':
 
 	df.columns=['tID','eName','eType','tText','tUrl','tTitleForUrl','tHashtags','tTotalRetweetCount','tIsRetweet','tOriginalID','tPostTime','tUtcOffset','tReceivedTime','tAdultScore','tQualityScore','tAuthorityScore','uScreenName','uFollowersCount','uIsVerified','tWordBrokenHashtag','tGeoPoint','uLocation','uTimeZone','tFavoriteCount','tReceivedHour']
 
-	df_loc=filter_locations(df)
-
-	dfEng=detectLanguage(df_loc[['tID','tText']])
-
-
-	#dfEng2=applyParallel(df_loc[['tID','tText','uLocation']].groupby(df_loc.index), detectLanguage)
-
-	dfEng.to_csv(args.output_file)
+	for name in [args.input_file]:#'EducationPakistan_201301.tsv','EducationPakistan_201302.tsv', 'EducationPakistan_201303.tsv', 'EducationPakistan_201304.tsv', 'EducationPakistan_201305.tsv', 'EducationPakistan_201306.tsv']:
+		print name
+		df=pd.read_csv(name, header=None, delimiter='\t', error_bad_lines =False,quoting=csv.QUOTE_NONE)
+		df.columns=['tID','eName','eType','tText','tUrl','tTitleForUrl','tHashtags','tTotalRetweetCount','tIsRetweet','tOriginalID','tPostTime','tUtcOffset', 'tReceivedTime','tAdultScore','tQualityScore','tAuthorityScore','uScreenName','uFollowersCount','uIsVerified','tWordBrokenHashtag','tGeoPoint','uLocation','uTimeZone','tFavoriteCount','tReceivedHour']
+		df_loc=filter_locations(df)
+		df_loc.to_csv(name+'_loc',sep='\t', header=False, index=False)
+		df_loc[['tID','tText']].to_csv(name+'_loc_tweet',sep='\t', header=False, index=False)
 
 
 

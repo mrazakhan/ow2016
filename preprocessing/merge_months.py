@@ -17,6 +17,8 @@ import multiprocessing
 import argparse
 import csv
 
+import os
+
 
 districts=["rajanpur","chiniot","bhakkar","ghazi","mianwali","muzaffargarh","khushab","bahawalpur","multan","lahore","sialkot","rawalpindi","faisalabad","attock","rahimyarkhan","pakpattan","khanewal","lodhran","gujranwala","sahiwal","qasur","chakwal"]
 
@@ -88,7 +90,12 @@ def getNonEnglish(df):
 	df['NonEngTokens']=df['tText'].apply(tokenize)
 	return df
 
-
+def distribute_by_district(df):
+	out={}
+	for each in districts:
+		out[each]=df[df['uLocation']==each]
+	
+	return out
 	
 def applyParallel(dfGrouped, func):
     retLst = Parallel(n_jobs=multiprocessing.cpu_count())(delayed(func)(group) for name, group in dfGrouped)
@@ -96,24 +103,26 @@ def applyParallel(dfGrouped, func):
 
 
 if __name__=='__main__':
-
-	parser=argparse.ArgumentParser(description='Preprocessing and filtering')
-	parser.add_argument('-if','--input_file',help='Input File', required=True)
-	parser.add_argument('-of','--output_file',help='Output File', required=True)
-
-	args=parser.parse_args()
-	df=pd.read_csv(args.input_file, header=None, delimiter='\t', error_bad_lines =False)
-
-	df.columns=['tID','eName','eType','tText','tUrl','tTitleForUrl','tHashtags','tTotalRetweetCount','tIsRetweet','tOriginalID','tPostTime','tUtcOffset','tReceivedTime','tAdultScore','tQualityScore','tAuthorityScore','uScreenName','uFollowersCount','uIsVerified','tWordBrokenHashtag','tGeoPoint','uLocation','uTimeZone','tFavoriteCount','tReceivedHour']
-
-	df_loc=filter_locations(df)
-
-	dfEng=detectLanguage(df_loc[['tID','tText']])
-
-
-	#dfEng2=applyParallel(df_loc[['tID','tText','uLocation']].groupby(df_loc.index), detectLanguage)
-
-	dfEng.to_csv(args.output_file)
-
-
-
+	import glob
+	import random
+	for name in districts:#'EducationPakistan_201301.tsv','EducationPakistan_201302.tsv', 'EducationPakistan_201303.tsv', 'EducationPakistan_201304.tsv', 'EducationPakistan_201305.tsv', 'EducationPakistan_201306.tsv']:
+		print name
+		frame = pd.DataFrame()
+		list_ = []
+		allFiles = glob.glob( name+ "/*loc")
+		for file_ in allFiles:
+    			#df = pd.read_csv(file_,index_col=None, header=0)
+			df=pd.read_csv(file_,  delimiter='\t', error_bad_lines =False,quoting=csv.QUOTE_NONE)
+    			list_.append(df)
+		frame = pd.concat(list_)
+		frame[['uScreenName']].describe().to_csv(name+'/description.csv')
+		names_list_complete=list(set(frame['uScreenName'].tolist()))
+		len_list=100
+		if len(names_list_complete)<len_list:
+			len_list=len(names_list_complete)
+		names_list=random.sample(names_list_complete,len_list)
+		with open(name+'/random_names.txt','w') as frn:
+			for each in names_list:
+				frn.write(each+' ')
+				
+		frame.to_csv(name+'/merged.csv',sep='\t')	
